@@ -1,0 +1,575 @@
+ Hadoop出现错误：WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable，
+ 解决方案
+安装Hadoop的时候直接用的bin版本，根据教程安装好之后运行的时候发现出现了：WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable 错误，百度很多都说是版本（32,64）问题，需要重新编译源码，历经一天的时间源码重新编译完成之后，再次运行仍旧有这个错误，google的解决方案是：
+
+1.执行：$ export HADOOP_ROOT_LOGGER=DEBUG,console
+
+查看具体的错误信息：
+复制代码
+
+17/03/16 11:35:47 DEBUG util.Shell: setsid exited with exit code 0
+17/03/16 11:35:47 DEBUG conf.Configuration: parsing URL jar:file:/usr/local/hadoop/share/hadoop/common/hadoop-common-2.7.1.jar!/core-default.xml
+17/03/16 11:35:47 DEBUG conf.Configuration: parsing input stream sun.net.www.protocol.jar.JarURLConnection$JarURLInputStream@462ac22a
+17/03/16 11:35:47 DEBUG conf.Configuration: parsing URL file:/usr/local/hadoop/etc/hadoop/core-site.xml
+17/03/16 11:35:47 DEBUG conf.Configuration: parsing input stream java.io.BufferedInputStream@405a2273
+17/03/16 11:35:48 DEBUG lib.MutableMetricsFactory: field org.apache.hadoop.metrics2.lib.MutableRate org.apache.hadoop.security.UserGroupInformation$UgiMetrics.loginSuccess with annotation @org.apache.eName=Time, value=[Rate of successful kerberos logins and latency (milliseconds)], about=, always=false, type=DEFAULT, sampleName=Ops)
+17/03/16 11:35:48 DEBUG lib.MutableMetricsFactory: field org.apache.hadoop.metrics2.lib.MutableRate org.apache.hadoop.security.UserGroupInformation$UgiMetrics.loginFailure with annotation @org.apache.eName=Time, value=[Rate of failed kerberos logins and latency (milliseconds)], about=, always=false, type=DEFAULT, sampleName=Ops)
+17/03/16 11:35:48 DEBUG lib.MutableMetricsFactory: field org.apache.hadoop.metrics2.lib.MutableRate org.apache.hadoop.security.UserGroupInformation$UgiMetrics.getGroups with annotation @org.apache.hadme=Time, value=[GetGroups], about=, always=false, type=DEFAULT, sampleName=Ops)
+17/03/16 11:35:48 DEBUG impl.MetricsSystemImpl: UgiMetrics, User and group related metrics
+17/03/16 11:35:48 DEBUG util.KerberosName: Kerberos krb5 configuration not found, setting default realm to empty
+17/03/16 11:35:48 DEBUG security.Groups:  Creating new Groups object
+17/03/16 11:35:48 DEBUG util.NativeCodeLoader: Trying to load the custom-built native-hadoop library...
+17/03/16 11:35:48 DEBUG util.NativeCodeLoader: Failed to load native-hadoop with error: java.lang.UnsatisfiedLinkError: no hadoop in java.library.path
+17/03/16 11:35:48 DEBUG util.NativeCodeLoader: java.library.path=/usr/java/packages/lib/amd64:/usr/lib64:/lib64:/lib:/usr/lib
+17/03/16 11:35:48 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+17/03/16 11:35:48 DEBUG util.PerformanceAdvisory: Falling back to shell based
+17/03/16 11:35:48 DEBUG security.JniBasedUnixGroupsMappingWithFallback: Group mapping impl=org.apache.hadoop.security.ShellBasedUnixGroupsMapping
+17/03/16 11:35:48 DEBUG security.Groups: Group mapping impl=org.apache.hadoop.security.JniBasedUnixGroupsMappingWithFallback; cacheTimeout=300000; warningDeltaMs=5000
+17/03/16 11:35:48 DEBUG security.UserGroupInformation: hadoop login
+17/03/16 11:35:48 DEBUG security.UserGroupInformation: hadoop login commit
+17/03/16 11:35:48 DEBUG security.UserGroupInformation: using local user:UnixPrincipal: hadoop
+17/03/16 11:35:48 DEBUG security.UserGroupInformation: Using user: "UnixPrincipal: hadoop" with name hadoop
+17/03/16 11:35:48 DEBUG security.UserGroupInformation: User entry: "hadoop"
+17/03/16 11:35:48 DEBUG security.UserGroupInformation: UGI loginUser:hadoop (auth:SIMPLE)
+
+复制代码
+
+其中有个warn信息，在这个信息附近找到一个：Failed to load native-hadoop with error: java.lang.UnsatisfiedLinkError，这表明是java.library.path出了问题，
+
+解决方案是在文件hadoop-env.sh中增加：
+
+export HADOOP_OPTS="-Djava.library.path=${HADOOP_HOME}/lib/native"  
+
+解决问题过程中遇到的比较好的链接：
+
+http://blog.csdn.net/l1028386804/article/details/51538611
+
+http://blog.csdn.net/xichenguan/article/details/38797331
+
+http://www.chinahadoop.cn/classroom/5/thread/43
+
+**************************************************
+
+Description	Resource	Path	Location	Type
+Failed to read artifact descriptor for aopalliance:aopalliance:jar:1.0
+
+org.eclipse.aether.resolution.ArtifactDescriptorException: Failed to read artifact descriptor for aopalliance:aopalliance:jar:1.0
+	at org.apache.maven.repository.internal.DefaultArtifactDescriptorReader.loadPom(DefaultArtifactDescriptorReader.java:276)
+	at org.apache.maven.repository.internal.DefaultArtifactDescriptorReader.readArtifactDescriptor(DefaultArtifactDescriptorReader.java:192)
+	at org.eclipse.aether.internal.impl.DefaultDependencyCollector.resolveCachedArtifactDescriptor(DefaultDependencyCollector.java:539)
+	at org.eclipse.aether.internal.impl.DefaultDependencyCollector.getArtifactDescriptorResult(DefaultDependencyCollector.java:522)
+	at org.eclipse.aether.internal.impl.DefaultDependencyCollector.processDependency(DefaultDependencyCollector.java:411)
+	at org.eclipse.aether.internal.impl.DefaultDependencyCollector.processDependency(DefaultDependencyCollector.java:365)
+	at org.eclipse.aether.internal.impl.DefaultDependencyCollector.process(DefaultDependencyCollector.java:353)
+	at org.eclipse.aether.internal.impl.DefaultDependencyCollector.doRecurse(DefaultDependencyCollector.java:507)
+	at org.eclipse.aether.internal.impl.DefaultDependencyCollector.processDependency(DefaultDependencyCollector.java:460)
+	at org.eclipse.aether.internal.impl.DefaultDependencyCollector.processDependency(DefaultDependencyCollector.java:365)
+	at org.eclipse.aether.internal.impl.DefaultDependencyCollector.process(DefaultDependencyCollector.java:353)
+	at org.eclipse.aether.internal.impl.DefaultDependencyCollector.doRecurse(DefaultDependencyCollector.java:507)
+	at org.eclipse.aether.internal.impl.DefaultDependencyCollector.processDependency(DefaultDependencyCollector.java:460)
+	at org.eclipse.aether.internal.impl.DefaultDependencyCollector.processDependency(DefaultDependencyCollector.java:365)
+	at org.eclipse.aether.internal.impl.DefaultDependencyCollector.process(DefaultDependencyCollector.java:353)
+	at org.eclipse.aether.internal.impl.DefaultDependencyCollector.doRecurse(DefaultDependencyCollector.java:507)
+	at org.eclipse.aether.internal.impl.DefaultDependencyCollector.processDependency(DefaultDependencyCollector.java:460)
+	at org.eclipse.aether.internal.impl.DefaultDependencyCollector.processDependency(DefaultDependencyCollector.java:365)
+	at org.eclipse.aether.internal.impl.DefaultDependencyCollector.process(DefaultDependencyCollector.java:353)
+	at org.eclipse.aether.internal.impl.DefaultDependencyCollector.doRecurse(DefaultDependencyCollector.java:507)
+	at org.eclipse.aether.internal.impl.DefaultDependencyCollector.processDependency(DefaultDependencyCollector.java:460)
+	at org.eclipse.aether.internal.impl.DefaultDependencyCollector.processDependency(DefaultDependencyCollector.java:365)
+	at org.eclipse.aether.internal.impl.DefaultDependencyCollector.process(DefaultDependencyCollector.java:353)
+	at org.eclipse.aether.internal.impl.DefaultDependencyCollector.collectDependencies(DefaultDependencyCollector.java:256)
+	at org.eclipse.aether.internal.impl.DefaultRepositorySystem.collectDependencies(DefaultRepositorySystem.java:282)
+	at org.apache.maven.project.DefaultProjectDependenciesResolver.resolve(DefaultProjectDependenciesResolver.java:169)
+	at org.apache.maven.project.DefaultProjectBuilder.resolveDependencies(DefaultProjectBuilder.java:212)
+	at org.apache.maven.project.DefaultProjectBuilder.build(DefaultProjectBuilder.java:185)
+	at org.apache.maven.project.DefaultProjectBuilder.build(DefaultProjectBuilder.java:116)
+	at org.eclipse.m2e.core.internal.embedder.MavenImpl.readMavenProject(MavenImpl.java:636)
+	at org.eclipse.m2e.core.internal.project.registry.DefaultMavenDependencyResolver.resolveProjectDependencies(DefaultMavenDependencyResolver.java:63)
+	at org.eclipse.m2e.core.internal.project.registry.ProjectRegistryManager.refreshPhase2(ProjectRegistryManager.java:530)
+	at org.eclipse.m2e.core.internal.project.registry.ProjectRegistryManager$3.call(ProjectRegistryManager.java:492)
+	at org.eclipse.m2e.core.internal.project.registry.ProjectRegistryManager$3.call(ProjectRegistryManager.java:1)
+	at org.eclipse.m2e.core.internal.embedder.MavenExecutionContext.executeBare(MavenExecutionContext.java:177)
+	at org.eclipse.m2e.core.internal.embedder.MavenExecutionContext.execute(MavenExecutionContext.java:151)
+	at org.eclipse.m2e.core.internal.project.registry.ProjectRegistryManager.refresh(ProjectRegistryManager.java:496)
+	at org.eclipse.m2e.core.internal.project.registry.ProjectRegistryManager.refresh(ProjectRegistryManager.java:351)
+	at org.eclipse.m2e.core.internal.project.registry.ProjectRegistryManager.refresh(ProjectRegistryManager.java:298)
+	at org.eclipse.m2e.core.internal.project.ProjectConfigurationManager.updateProjectConfiguration0(ProjectConfigurationManager.java:405)
+	at org.eclipse.m2e.core.internal.project.ProjectConfigurationManager$2.call(ProjectConfigurationManager.java:352)
+	at org.eclipse.m2e.core.internal.project.ProjectConfigurationManager$2.call(ProjectConfigurationManager.java:1)
+	at org.eclipse.m2e.core.internal.embedder.MavenExecutionContext.executeBare(MavenExecutionContext.java:177)
+	at org.eclipse.m2e.core.internal.embedder.MavenExecutionContext.execute(MavenExecutionContext.java:151)
+	at org.eclipse.m2e.core.internal.embedder.MavenExecutionContext.execute(MavenExecutionContext.java:99)
+	at org.eclipse.m2e.core.internal.embedder.MavenImpl.execute(MavenImpl.java:1351)
+	at org.eclipse.m2e.core.internal.project.ProjectConfigurationManager.updateProjectConfiguration(ProjectConfigurationManager.java:349)
+	at org.eclipse.m2e.core.ui.internal.UpdateMavenProjectJob.runInWorkspace(UpdateMavenProjectJob.java:77)
+	at org.eclipse.core.internal.resources.InternalWorkspaceJob.run(InternalWorkspaceJob.java:42)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:63)
+Caused by: org.eclipse.aether.resolution.ArtifactResolutionException: Failure to transfer aopalliance:aopalliance:pom:1.0 from https://repo.maven.apache.org/maven2 was cached in the local repository, resolution will not be reattempted until the update interval of central has elapsed or updates are forced. Original error: Could not transfer artifact aopalliance:aopalliance:pom:1.0 from/to central (https://repo.maven.apache.org/maven2): repo.maven.apache.org
+	at org.eclipse.aether.internal.impl.DefaultArtifactResolver.resolve(DefaultArtifactResolver.java:422)
+	at org.eclipse.aether.internal.impl.DefaultArtifactResolver.resolveArtifacts(DefaultArtifactResolver.java:224)
+	at org.eclipse.aether.internal.impl.DefaultArtifactResolver.resolveArtifact(DefaultArtifactResolver.java:201)
+	at org.apache.maven.repository.internal.DefaultArtifactDescriptorReader.loadPom(DefaultArtifactDescriptorReader.java:261)
+	... 49 more
+Caused by: org.eclipse.aether.transfer.ArtifactTransferException: Failure to transfer aopalliance:aopalliance:pom:1.0 from https://repo.maven.apache.org/maven2 was cached in the local repository, resolution will not be reattempted until the update interval of central has elapsed or updates are forced. Original error: Could not transfer artifact aopalliance:aopalliance:pom:1.0 from/to central (https://repo.maven.apache.org/maven2): repo.maven.apache.org
+	at org.eclipse.aether.internal.impl.DefaultUpdateCheckManager.newException(DefaultUpdateCheckManager.java:240)
+	at org.eclipse.aether.internal.impl.DefaultUpdateCheckManager.checkArtifact(DefaultUpdateCheckManager.java:208)
+	at org.eclipse.aether.internal.impl.DefaultArtifactResolver.gatherDownloads(DefaultArtifactResolver.java:563)
+	at org.eclipse.aether.internal.impl.DefaultArtifactResolver.performDownloads(DefaultArtifactResolver.java:481)
+	at org.eclipse.aether.internal.impl.DefaultArtifactResolver.resolve(DefaultArtifactResolver.java:399)
+	... 52 more
+	pom.xml	/datacount	line 1	Maven Dependency Problem
+解决：更新时Force Update of Snapshots/Releases打上对勾，选择强制更新
+
+pom提示：Missing artifact jdk.tools:jdk.tools:jar:1.8
+原因：缺少tools.jar
+解决：在pom中加上
+<dependency> 
+        	<groupId>jdk.tools</groupId> 
+        	<artifactId>jdk.tools</artifactId> 
+        	<version>1.8</version> 
+        	<scope>system</scope> 
+        	<systemPath>D:/Java/jdk1.8.0_144/lib/tools.jar</systemPath> 
+</dependency>
+**注意：systempath应该填入绝对路径
+
+java.lang.IllegalArgumentException: java.net.UnknownHostException: namenode：
+使用hostname:port获取uri失败，未知hostname异常；
+出错语句：
+FileSystem fs = FileSystem.get(new URI("hdfs://namenode:9000"), new Configuration());
+原因排查：
+ping namenode。 如果ping不通，说明win10的hosts文件中没有namenode对应的配置
+解决：
+win + r 输入 C:\WINDOWS\system32\drivers\etc 回车：打开host目录
+用notepadd打开hosts文件
+文件尾部加上一句 192.168.72.100	namenode 保存 关闭hosts文件
+ping namenode 通了 说明解决问题。
+
+
+java.net.ConnectException: Call From DESKTOP-F64E7B9/192.168.72.1 to namenode:9000 failed on connection exception: java.net.ConnectException: Connection refused: no further information; For more details see:  http://wiki.apache.org/hadoop/ConnectionRefused
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(Unknown Source)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(Unknown Source)
+原因排查：
+
+	防火墙是否关闭？关闭
+	http://www.cnblogs.com/JemBai/archive/2009/03/19/1416364.html
+	
+	9000端口是否开启？未开启   	
+	linux如何查看端口占用
+	1、lsof -i:端口号
+	2、netstat -tunlp|grep 端口号
+解决：
+	查询配置文件
+	
+	core-site.xml
+	
+	<property>
+      <name>fs.defaultFS</name>
+      <value>hdfs://namenode</value>
+    </property>
+	没有指定端口；改为
+	core-site.xml
+	  <property>
+	  <name>fs.defaultFS</name>
+	  <value>hdfs://namenode</value>
+	</property>
+	defaultFS的端口需要与rpc端口一致。
+	
+	hdfs-site.xml配置如下：
+  
+	<property>
+      <name>dfs.namenode.rpc-address</name>
+      <value>namenode:9000</value>
+    </property>
+	
+org.apache.hadoop.security.AccessControlException: Permission denied: user=tsing, access=WRITE, inode="/":hadoop:supergroup:drwxr-xr-x
+原因：java默认的用户是tsing，明显的 没有目录 “/”的写权限 hadoop用户有写权限
+解决：FileSystem fs = FileSystem.get(new URI("hdfs://namenode:9000"), new Configuration(),"hadoop");
+
+windows10 telnet不可用
+控制面板 》程序》启用或关闭windows功能》telnet
+
+RPCServer的ip和端口
+	1、win10 那个端口空闲？
+	cmd> netstat -ano | grep ****
+	没有返回 则为可用的端口
+	2、端口可用？
+	验证端口9000的可用性
+	# Telnet namenode 9000
+	回车后进入空白的黑屏 则端口可用
+	https://blog.csdn.net/msq7487223/article/details/52366148
+
+	RPC中的ip是内部还是外部 netstat -ano 显示了内部地址和外部地址？
+	
+ubuntu启动RPCClient win10启动RPCServer
+Caused by: java.net.ConnectException: Call From namenode/192.168.72.100 to win10:143 failed on connection exception: java.net.ConnectException: Connection refu http://wiki.apache.org/hadoop/ConnectionRefused
+
+原因分析：win10未安装 telnet服务器，需要吗，教程没有让安装。
+			我安装了：telnetdSetup.exe下载地址 http://www.goodtechsys.com/downloadstelnetnt2000.asp 直接安装就会默认启动 确认启动请打开服务，查找goodtech telnetd服务
+			未解决
+		还是不知道使用哪个端口和ip
+
+		
+	
+	
+启动yarn和hdfs 只有
+	hadoop@namenode:~$ jps
+	80928 Jps
+	7701 NameNode
+	8037 SecondaryNameNode
+	77097 ResourceManager
+	7837 DataNode
+	缺少NodeManage
+解决1：关闭重启
+		$ stop-all.sh  
+		$ start-dfs.sh 
+		$ start-yarn.sh
+
+hadoop@namenode:~$ hadoop jar WordCount.jar com.myhadoop.wordcount.WordCount /words /wc
+18/12/16 01:19:54 INFO Configuration.deprecation: session.id is deprecated. Instead, use dfs.metrics.session-id
+18/12/16 01:19:54 INFO jvm.JvmMetrics: Initializing JVM Metrics with processName=JobTracker, sessionId=
+18/12/16 01:19:57 WARN mapreduce.JobResourceUploader: Hadoop command-line option parsing not performed. Implement the Tool interface and execute your application with ToolRunner to remedy this.
+18/12/16 01:19:57 INFO input.FileInputFormat: Total input files to process : 1
+18/12/16 01:19:58 INFO mapreduce.JobSubmitter: number of splits:1
+18/12/16 01:19:58 INFO mapreduce.JobSubmitter: Submitting tokens for job: job_local1408722432_0001
+18/12/16 01:19:59 INFO mapreduce.Job: The url to track the job: http://localhost:8080/
+18/12/16 01:19:59 INFO mapreduce.Job: Running job: job_local1408722432_0001
+18/12/16 01:19:59 INFO mapred.LocalJobRunner: OutputCommitter set in config null
+18/12/16 01:19:59 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
+18/12/16 01:19:59 INFO output.FileOutputCommitter: FileOutputCommitter skip cleanup _temporary folders under output directory:false, ignore cleanup failures: false
+18/12/16 01:20:00 INFO mapred.LocalJobRunner: OutputCommitter is org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter
+18/12/16 01:20:00 INFO mapred.LocalJobRunner: Waiting for map tasks
+18/12/16 01:20:00 INFO mapred.LocalJobRunner: Starting task: attempt_local1408722432_0001_m_000000_0
+18/12/16 01:20:00 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
+18/12/16 01:20:00 INFO output.FileOutputCommitter: FileOutputCommitter skip cleanup _temporary folders under output directory:false, ignore cleanup failures: false
+18/12/16 01:20:00 INFO mapred.Task:  Using ResourceCalculatorProcessTree : [ ]
+18/12/16 01:20:00 INFO mapred.MapTask: Processing split: hdfs://namenode:9000/words:0+55
+18/12/16 01:20:00 INFO mapreduce.Job: Job job_local1408722432_0001 running in uber mode : false
+18/12/16 01:20:00 INFO mapreduce.Job:  map 0% reduce 0%
+18/12/16 01:20:07 INFO mapred.MapTask: (EQUATOR) 0 kvi 26214396(104857584)
+18/12/16 01:20:07 INFO mapred.MapTask: mapreduce.task.io.sort.mb: 100
+18/12/16 01:20:07 INFO mapred.MapTask: soft limit at 83886080
+18/12/16 01:20:07 INFO mapred.MapTask: bufstart = 0; bufvoid = 104857600
+18/12/16 01:20:07 INFO mapred.MapTask: kvstart = 26214396; length = 6553600
+18/12/16 01:20:07 INFO mapred.MapTask: Map output collector class = org.apache.hadoop.mapred.MapTask$MapOutputBuffer
+18/12/16 01:20:10 INFO mapred.LocalJobRunner:
+18/12/16 01:20:10 INFO mapred.MapTask: Starting flush of map output
+18/12/16 01:20:10 INFO mapred.MapTask: Spilling map output
+18/12/16 01:20:10 INFO mapred.MapTask: bufstart = 0; bufend = 135; bufvoid = 104857600
+18/12/16 01:20:10 INFO mapred.MapTask: kvstart = 26214396(104857584); kvend = 26214360(104857440); length = 37/6553600
+18/12/16 01:20:11 INFO mapred.MapTask: Finished spill 0
+18/12/16 01:20:11 INFO mapred.Task: Task:attempt_local1408722432_0001_m_000000_0 is done. And is in the process of committing
+18/12/16 01:20:11 INFO mapred.LocalJobRunner: map
+18/12/16 01:20:11 INFO mapred.Task: Task 'attempt_local1408722432_0001_m_000000_0' done.
+18/12/16 01:20:11 INFO mapred.LocalJobRunner: Finishing task: attempt_local1408722432_0001_m_000000_0
+18/12/16 01:20:11 INFO mapred.LocalJobRunner: map task executor complete.
+18/12/16 01:20:11 INFO mapred.LocalJobRunner: Waiting for reduce tasks
+18/12/16 01:20:11 INFO mapred.LocalJobRunner: Starting task: attempt_local1408722432_0001_r_000000_0
+18/12/16 01:20:12 INFO output.FileOutputCommitter: File Output Committer Algorithm version is 1
+18/12/16 01:20:12 INFO output.FileOutputCommitter: FileOutputCommitter skip cleanup _temporary folders under output directory:false, ignore cleanup failures: false
+18/12/16 01:20:12 INFO mapred.Task:  Using ResourceCalculatorProcessTree : [ ]
+18/12/16 01:20:12 INFO mapred.ReduceTask: Using ShuffleConsumerPlugin: org.apache.hadoop.mapreduce.task.reduce.Shuffle@548762a2
+18/12/16 01:20:12 INFO mapreduce.Job:  map 100% reduce 0%
+18/12/16 01:20:12 INFO reduce.MergeManagerImpl: MergerManager: memoryLimit=363285696, maxSingleShuffleLimit=90821424, mergeThreshold=239768576, ioSortFactor=10, memToMemMergeOutputsThreshold=10
+18/12/16 01:20:12 INFO reduce.EventFetcher: attempt_local1408722432_0001_r_000000_0 Thread started: EventFetcher for fetching Map Completion Events
+18/12/16 01:20:13 INFO reduce.LocalFetcher: localfetcher#1 about to shuffle output of map attempt_local1408722432_0001_m_000000_0 decomp: 157 len: 161 to MEMORY
+18/12/16 01:20:13 INFO reduce.InMemoryMapOutput: Read 157 bytes from map-output for attempt_local1408722432_0001_m_000000_0
+18/12/16 01:20:13 INFO reduce.MergeManagerImpl: closeInMemoryFile -> map-output of size: 157, inMemoryMapOutputs.size() -> 1, commitMemory -> 0, usedMemory ->157
+18/12/16 01:20:13 INFO reduce.EventFetcher: EventFetcher is interrupted.. Returning
+18/12/16 01:20:13 INFO mapred.LocalJobRunner: 1 / 1 copied.
+18/12/16 01:20:13 INFO reduce.MergeManagerImpl: finalMerge called with 1 in-memory map-outputs and 0 on-disk map-outputs
+18/12/16 01:20:13 WARN io.ReadaheadPool: Failed readahead on ifile
+EBADF: Bad file descriptor
+        at org.apache.hadoop.io.nativeio.NativeIO$POSIX.posix_fadvise(Native Method)
+        at org.apache.hadoop.io.nativeio.NativeIO$POSIX.posixFadviseIfPossible(NativeIO.java:267)
+        at org.apache.hadoop.io.nativeio.NativeIO$POSIX$CacheManipulator.posixFadviseIfPossible(NativeIO.java:146)
+        at org.apache.hadoop.io.ReadaheadPool$ReadaheadRequestImpl.run(ReadaheadPool.java:208)
+        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+        at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+        at java.lang.Thread.run(Thread.java:745)
+18/12/16 01:20:13 INFO mapred.Merger: Merging 1 sorted segments
+18/12/16 01:20:13 INFO mapred.Merger: Down to the last merge-pass, with 1 segments left of total size: 149 bytes
+18/12/16 01:20:13 INFO reduce.MergeManagerImpl: Merged 1 segments, 157 bytes to disk to satisfy reduce memory limit
+18/12/16 01:20:13 INFO reduce.MergeManagerImpl: Merging 1 files, 161 bytes from disk
+18/12/16 01:20:13 INFO reduce.MergeManagerImpl: Merging 0 segments, 0 bytes from memory into reduce
+18/12/16 01:20:13 INFO mapred.Merger: Merging 1 sorted segments
+18/12/16 01:20:13 INFO mapred.Merger: Down to the last merge-pass, with 1 segments left of total size: 149 bytes
+18/12/16 01:20:13 INFO mapred.LocalJobRunner: 1 / 1 copied.
+18/12/16 01:20:14 INFO Configuration.deprecation: mapred.skip.on is deprecated. Instead, use mapreduce.job.skiprecords
+18/12/16 01:20:17 INFO mapred.Task: Task:attempt_local1408722432_0001_r_000000_0 is done. And is in the process of committing
+18/12/16 01:20:17 INFO mapred.LocalJobRunner: 1 / 1 copied.
+18/12/16 01:20:17 INFO mapred.Task: Task attempt_local1408722432_0001_r_000000_0 is allowed to commit now
+18/12/16 01:20:17 INFO output.FileOutputCommitter: Saved output of task 'attempt_local1408722432_0001_r_000000_0' to hdfs://namenode:9000/wc/_temporary/0/task_local1408722432_0001_r_000000
+18/12/16 01:20:17 INFO mapred.LocalJobRunner: reduce > reduce
+18/12/16 01:20:17 INFO mapred.Task: Task 'attempt_local1408722432_0001_r_000000_0' done.
+18/12/16 01:20:17 INFO mapred.LocalJobRunner: Finishing task: attempt_local1408722432_0001_r_000000_0
+18/12/16 01:20:17 INFO mapred.LocalJobRunner: reduce task executor complete.
+18/12/16 01:20:18 INFO mapreduce.Job:  map 100% reduce 100%
+18/12/16 01:20:18 INFO mapreduce.Job: Job job_local1408722432_0001 completed successfully
+18/12/16 01:20:18 INFO mapreduce.Job: Counters: 35
+        File System Counters
+                FILE: Number of bytes read=17118
+                FILE: Number of bytes written=658793
+                FILE: Number of read operations=0
+                FILE: Number of large read operations=0
+                FILE: Number of write operations=0
+                HDFS: Number of bytes read=110
+                HDFS: Number of bytes written=37
+                HDFS: Number of read operations=13
+                HDFS: Number of large read operations=0
+                HDFS: Number of write operations=4
+        Map-Reduce Framework
+                Map input records=5
+                Map output records=10
+                Map output bytes=135
+                Map output materialized bytes=161
+                Input split bytes=91
+                Combine input records=0
+                Combine output records=0
+                Reduce input groups=5
+                Reduce shuffle bytes=161
+                Reduce input records=10
+                Reduce output records=5
+                Spilled Records=20
+                Shuffled Maps =1
+                Failed Shuffles=0
+                Merged Map outputs=1
+                GC time elapsed (ms)=94
+                Total committed heap usage (bytes)=243105792
+        Shuffle Errors
+                BAD_ID=0
+                CONNECTION=0
+                IO_ERROR=0
+                WRONG_LENGTH=0
+                WRONG_MAP=0
+                WRONG_REDUCE=0
+        File Input Format Counters
+                Bytes Read=55
+        File Output Format Counters
+                Bytes Written=37
+
+hadoop@namenode:/usr/local/hadoop/share/hadoop/mapreduce$ hadoop jar hadoop-mapredu                                                                                                       ce-examples-2.8.0.jar wordcount /words /wc
+18/12/16 01:31:46 INFO Configuration.deprecation: session.id is deprecated. Instead                                                                                                       , use dfs.metrics.session-id
+18/12/16 01:31:46 INFO jvm.JvmMetrics: Initializing JVM Metrics with processName=Jo                                                                                                       bTracker, sessionId=
+18/12/16 01:31:47 INFO input.FileInputFormat: Total input files to process : 1
+18/12/16 01:31:48 INFO mapreduce.JobSubmitter: number of splits:1
+18/12/16 01:31:48 INFO mapreduce.JobSubmitter: Submitting tokens for job: job_local                                                                                                       244103929_0001
+18/12/16 01:31:49 INFO mapreduce.Job: The url to track the job: http://localhost:80                                                                                                       80/
+18/12/16 01:31:49 INFO mapreduce.Job: Running job: job_local244103929_0001
+18/12/16 01:31:49 INFO mapred.LocalJobRunner: OutputCommitter set in config null
+18/12/16 01:31:49 INFO output.FileOutputCommitter: File Output Committer Algorithm                                                                                                        version is 1
+18/12/16 01:31:49 INFO output.FileOutputCommitter: FileOutputCommitter skip cleanup                                                                                                        _temporary folders under output directory:false, ignore cleanup failures: false
+18/12/16 01:31:49 INFO mapred.LocalJobRunner: OutputCommitter is org.apache.hadoop.                                                                                                       mapreduce.lib.output.FileOutputCommitter
+18/12/16 01:31:49 INFO mapred.LocalJobRunner: Waiting for map tasks
+18/12/16 01:31:49 INFO mapred.LocalJobRunner: Starting task: attempt_local244103929                                                                                                       _0001_m_000000_0
+18/12/16 01:31:49 INFO output.FileOutputCommitter: File Output Committer Algorithm                                                                                                        version is 1
+18/12/16 01:31:49 INFO output.FileOutputCommitter: FileOutputCommitter skip cleanup                                                                                                        _temporary folders under output directory:false, ignore cleanup failures: false
+18/12/16 01:31:49 INFO mapred.Task:  Using ResourceCalculatorProcessTree : [ ]
+18/12/16 01:31:49 INFO mapred.MapTask: Processing split: hdfs://namenode:9000/words                                                                                                       :0+55
+18/12/16 01:31:50 INFO mapreduce.Job: Job job_local244103929_0001 running in uber m                                                                                                       ode : false
+18/12/16 01:31:50 INFO mapreduce.Job:  map 0% reduce 0%
+18/12/16 01:31:50 INFO mapred.MapTask: (EQUATOR) 0 kvi 26214396(104857584)
+18/12/16 01:31:50 INFO mapred.MapTask: mapreduce.task.io.sort.mb: 100
+18/12/16 01:31:50 INFO mapred.MapTask: soft limit at 83886080
+18/12/16 01:31:50 INFO mapred.MapTask: bufstart = 0; bufvoid = 104857600
+18/12/16 01:31:50 INFO mapred.MapTask: kvstart = 26214396; length = 6553600
+18/12/16 01:31:50 INFO mapred.MapTask: Map output collector class = org.apache.hado                                                                                                       op.mapred.MapTask$MapOutputBuffer
+18/12/16 01:31:51 INFO mapred.LocalJobRunner:
+18/12/16 01:31:51 INFO mapred.MapTask: Starting flush of map output
+18/12/16 01:31:51 INFO mapred.MapTask: Spilling map output
+18/12/16 01:31:51 INFO mapred.MapTask: bufstart = 0; bufend = 95; bufvoid = 1048576                                                                                                       00
+18/12/16 01:31:51 INFO mapred.MapTask: kvstart = 26214396(104857584); kvend = 26214                                                                                                       360(104857440); length = 37/6553600
+18/12/16 01:31:51 INFO mapred.MapTask: Finished spill 0
+18/12/16 01:31:51 INFO mapred.Task: Task:attempt_local244103929_0001_m_000000_0 is                                                                                                        done. And is in the process of committing
+18/12/16 01:31:51 INFO mapred.LocalJobRunner: map
+18/12/16 01:31:51 INFO mapred.Task: Task 'attempt_local244103929_0001_m_000000_0' d                                                                                                       one.
+18/12/16 01:31:51 INFO mapred.LocalJobRunner: Finishing task: attempt_local24410392                                                                                                       9_0001_m_000000_0
+18/12/16 01:31:51 INFO mapred.LocalJobRunner: map task executor complete.
+18/12/16 01:31:51 INFO mapred.LocalJobRunner: Waiting for reduce tasks
+18/12/16 01:31:51 INFO mapred.LocalJobRunner: Starting task: attempt_local244103929                                                                                                       _0001_r_000000_0
+18/12/16 01:31:51 INFO output.FileOutputCommitter: File Output Committer Algorithm                                                                                                        version is 1
+18/12/16 01:31:51 INFO output.FileOutputCommitter: FileOutputCommitter skip cleanup                                                                                                        _temporary folders under output directory:false, ignore cleanup failures: false
+18/12/16 01:31:51 INFO mapred.Task:  Using ResourceCalculatorProcessTree : [ ]
+18/12/16 01:31:51 INFO mapred.ReduceTask: Using ShuffleConsumerPlugin: org.apache.h                                                                                                       adoop.mapreduce.task.reduce.Shuffle@59dcbce1
+18/12/16 01:31:51 INFO reduce.MergeManagerImpl: MergerManager: memoryLimit=36328569                                                                                                       6, maxSingleShuffleLimit=90821424, mergeThreshold=239768576, ioSortFactor=10, memTo                                                                                                       MemMergeOutputsThreshold=10
+18/12/16 01:31:51 INFO reduce.EventFetcher: attempt_local244103929_0001_r_000000_0                                                                                                        Thread started: EventFetcher for fetching Map Completion Events
+18/12/16 01:31:52 INFO mapreduce.Job:  map 100% reduce 0%
+18/12/16 01:31:52 INFO reduce.LocalFetcher: localfetcher#1 about to shuffle output                                                                                                        of map attempt_local244103929_0001_m_000000_0 decomp: 59 len: 63 to MEMORY
+18/12/16 01:31:52 INFO reduce.InMemoryMapOutput: Read 59 bytes from map-output for                                                                                                        attempt_local244103929_0001_m_000000_0
+18/12/16 01:31:52 INFO reduce.MergeManagerImpl: closeInMemoryFile -> map-output of                                                                                                        size: 59, inMemoryMapOutputs.size() -> 1, commitMemory -> 0, usedMemory ->59
+18/12/16 01:31:52 INFO reduce.EventFetcher: EventFetcher is interrupted.. Returning
+18/12/16 01:31:52 INFO mapred.LocalJobRunner: 1 / 1 copied.
+18/12/16 01:31:52 INFO reduce.MergeManagerImpl: finalMerge called with 1 in-memory                                                                                                        map-outputs and 0 on-disk map-outputs
+18/12/16 01:31:52 INFO mapred.Merger: Merging 1 sorted segments
+18/12/16 01:31:52 INFO mapred.Merger: Down to the last merge-pass, with 1 segments                                                                                                        left of total size: 51 bytes
+18/12/16 01:31:52 INFO reduce.MergeManagerImpl: Merged 1 segments, 59 bytes to disk                                                                                                        to satisfy reduce memory limit
+18/12/16 01:31:52 INFO reduce.MergeManagerImpl: Merging 1 files, 63 bytes from disk
+18/12/16 01:31:52 INFO reduce.MergeManagerImpl: Merging 0 segments, 0 bytes from me                                                                                                       mory into reduce
+18/12/16 01:31:52 INFO mapred.Merger: Merging 1 sorted segments
+18/12/16 01:31:52 INFO mapred.Merger: Down to the last merge-pass, with 1 segments                                                                                                        left of total size: 51 bytes
+18/12/16 01:31:52 INFO mapred.LocalJobRunner: 1 / 1 copied.
+18/12/16 01:31:52 INFO Configuration.deprecation: mapred.skip.on is deprecated. Ins                                                                                                       tead, use mapreduce.job.skiprecords
+18/12/16 01:31:54 INFO mapred.Task: Task:attempt_local244103929_0001_r_000000_0 is                                                                                                        done. And is in the process of committing
+18/12/16 01:31:54 INFO mapred.LocalJobRunner: 1 / 1 copied.
+18/12/16 01:31:54 INFO mapred.Task: Task attempt_local244103929_0001_r_000000_0 is                                                                                                        allowed to commit now
+18/12/16 01:31:54 INFO output.FileOutputCommitter: Saved output of task 'attempt_lo                                                                                                       cal244103929_0001_r_000000_0' to hdfs://namenode:9000/wc/_temporary/0/task_local244                                                                                                       103929_0001_r_000000
+18/12/16 01:31:54 INFO mapred.LocalJobRunner: reduce > reduce
+18/12/16 01:31:54 INFO mapred.Task: Task 'attempt_local244103929_0001_r_000000_0' d                                                                                                       one.
+18/12/16 01:31:54 INFO mapred.LocalJobRunner: Finishing task: attempt_local24410392                                                                                                       9_0001_r_000000_0
+18/12/16 01:31:54 INFO mapred.LocalJobRunner: reduce task executor complete.
+18/12/16 01:31:55 INFO mapreduce.Job:  map 100% reduce 100%
+18/12/16 01:31:55 INFO mapreduce.Job: Job job_local244103929_0001 completed success                                                                                                       fully
+18/12/16 01:31:55 INFO mapreduce.Job: Counters: 35
+        File System Counters
+                FILE: Number of bytes read=604314
+                FILE: Number of bytes written=1247095
+                FILE: Number of read operations=0
+                FILE: Number of large read operations=0
+                FILE: Number of write operations=0
+                HDFS: Number of bytes read=110
+                HDFS: Number of bytes written=37
+                HDFS: Number of read operations=13
+                HDFS: Number of large read operations=0
+                HDFS: Number of write operations=4
+        Map-Reduce Framework
+                Map input records=5
+                Map output records=10
+                Map output bytes=95
+                Map output materialized bytes=63
+                Input split bytes=91
+                Combine input records=10
+                Combine output records=5
+                Reduce input groups=5
+                Reduce shuffle bytes=63
+                Reduce input records=5
+                Reduce output records=5
+                Spilled Records=10
+                Shuffled Maps =1
+                Failed Shuffles=0
+                Merged Map outputs=1
+                GC time elapsed (ms)=59
+                Total committed heap usage (bytes)=243392512
+        Shuffle Errors
+                BAD_ID=0
+                CONNECTION=0
+                IO_ERROR=0
+                WRONG_LENGTH=0
+                WRONG_MAP=0
+                WRONG_REDUCE=0
+        File Input Format Counters
+                Bytes Read=55
+        File Output Format Counters
+                Bytes Written=37
+				
+		
+		
+	
+	2. Hadoop 2.x版本
+Hadoop 2.x中YARN系统的服务日志包括ResourceManager日志和各个NodeManager日志，他们的日志位置如下：
+ResourceManager日志存放位置是Hadoop安装目录下的logs目录下的yarn-*-resourcemanager-*.log
+NodeManager日志存放位置是各个NodeManager节点上hadoop安装目录下的logs目录下的yarn-*-nodemanager-*.log
+应用程序日志包括jobhistory日志和Container日志，其中，jobhistory日志是应用程序运行日志，包括应用程序启动时间、结束时间，每个任务的启动时间、结束时间，各种counter信息等。
+Container日志包含ApplicationMaster日志和普通Task日志，它们均存放在Hadoop安装目录下的userlogs目录中的application_xxx目录下，其中ApplicationMaster日志目录名称为container_xxx_000001，普通task日志目录名称则为container_xxx_000002，container_xxx_000003，….，同Hadoop 1.x一样，每个目录下包含三个日志文件：stdout、stderr和syslog，且具体含义是一样的。
+3. 总结
+Hadoop日志是用户定位问题的最重要渠道，对于初学者而言，往往意识不到这一点，或者即使意识到这一点，也找不到日志存放位置，希望本文对初学者有帮助。
+--------------------- 
+作者：技术人的突破 
+来源：CSDN 
+原文：https://blog.csdn.net/lifuxiangcaohui/article/details/20233607 
+版权声明：本文为博主原创文章，转载请附上博文链接！
+	
+
+	
+	
+	07:32:38 WARN io.ReadaheadPool: Failed readahead on ifile
+EBADF: Bad file descriptor
+	at org.apache.hadoop.io.nativeio.NativeIO$POSIX.posix_fadvise(Native Method)
+	at org.apache.hadoop.io.nativeio.NativeIO$POSIX.posixFadviseIfPossible(NativeIO.java:267)
+	at org.apache.hadoop.io.nativeio.NativeIO$POSIX$CacheManipulator.posixFadviseIfPossible(NativeIO.java:146)
+	at org.apache.hadoop.io.ReadaheadPool$ReadaheadRequestImpl.run(ReadaheadPool.java:208)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+	at java.lang.Thread.run(Thread.java:745)
+
+如果出现上面的警告，是因为快速读取文件的时候，文件被关闭引起，也可能是其他bug导致，此处忽略。
+
+
+Errors occurred during the build.
+Errors running builder 'Maven Project Builder' on project 'datacount'.
+Could not calculate build plan: Plugin org.apache.maven.plugins:maven-resources-plugin:2.6 or one of its dependencies could not be resolved: Failed to read artifact descriptor for org.apache.maven.plugins:maven-resources-plugin:jar:2.6
+Plugin org.apache.maven.plugins:maven-resources-plugin:2.6 or one of its dependencies could not be resolved: Failed to read artifact descriptor for org.apache.maven.plugins:maven-resources-plugin:jar:2.6
+Could not calculate build plan: Plugin org.apache.maven.plugins:maven-resources-plugin:2.6 or one of its dependencies could not be resolved: Failed to read artifact descriptor for org.apache.maven.plugins:maven-resources-plugin:jar:2.6
+Plugin org.apache.maven.plugins:maven-resources-plugin:2.6 or one of its dependencies could not be resolved: Failed to read artifact descriptor for org.apache.maven.plugins:maven-resources-plugin:jar:2.6
+原因：原有maven库里的东西与需要下载的东西有冲突
+解决：
+	办法1、右键工程 》maven 》update project 》选中强制更新（forece update of Snapshot/Releases ）
+	办法2、手动删除原有库的内容 》maven update一下。
+	其实办法1、2的本质相同，都是重新下载库的内容。2比较麻烦 1更好
+	
+<terminated>DataCount [Java Application]	
+	<terminated>com.myhadoop.dc.DataCount at localhost:37848	
+	<terminated, exit value: 0>/usr/lib/jvm/java/bin/java (Dec 17, 2018, 7:38:21 PM)	
+
+	
+	
+	
+java.lang.Exception: java.lang.ArrayIndexOutOfBoundsException: 1
+        at org.apache.hadoop.mapred.LocalJobRunner$Job.runTasks(LocalJobRunner.java:489)
+        at org.apache.hadoop.mapred.LocalJobRunner$Job.run(LocalJobRunner.java:549)
+Caused by: java.lang.ArrayIndexOutOfBoundsException: 1
+        at com.myhadoop.dc.DCMapper.map(DCMapper.java:23)
+        at com.myhadoop.dc.DCMapper.map(DCMapper.java:1)
+        at org.apache.hadoop.mapreduce.Mapper.run(Mapper.java:146)
+        at org.apache.hadoop.mapred.MapTask.runNewMapper(MapTask.java:787)
+        at org.apache.hadoop.mapred.MapTask.run(MapTask.java:341)
+        at org.apache.hadoop.mapred.LocalJobRunner$Job$MapTaskRunnable.run(LocalJobRunner.java:270)
+        at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+        at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+        at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+		
+		
+hadoop@ubuntu00:/tmp$ jps
+17424 -- process information unavailable
+17681 -- process information unavailable
+17539 -- process information unavailable
+19843 Jps
+分析贴 https://blog.csdn.net/qq_24073707/article/details/80352425
+
+修改的windows10 修改的hosts保存好了，就是不生效。
+	1、备份 删除原hosts 备份回来 改名为hosts
+	2、ipconfig /displaydns ：不知为什么
+	网上的教程
+	
+		hosts 文件所在位置
+
+		c:/windows/system32/drivers/etc/
+
+		左下角 搜索框 搜索 cmd
+
+		弹出命令框
+		输入
+		ipconfig /displaydns
+
+		显示所有 dns内容
+
+		ipconfig /flushdns
+
+		刷新所有 dns内容
+		--------------------- 
+		作者：hqfok 
+		来源：CSDN 
+		原文：https://blog.csdn.net/hqfok/article/details/55095669 
+		版权声明：本文为博主原创文章，转载请附上博文链接！
+			
+X11 connection rejected because of wrong authentication.
+解决：
+	以root身份运行下列命令
+	# apt remove xorg
+	# apt install xorg
+	# reboot
+	教程 http://www.xbitworld.com/?p=865 未经验证 
+	
+
+
+		

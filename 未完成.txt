@@ -1,0 +1,2 @@
+
+	1、由于配置远程debug导致的 10524 -- main class information unavailable
